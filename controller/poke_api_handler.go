@@ -21,7 +21,7 @@ func GetPokemon(c *gin.Context) {
 		log.Fatal(err)
 	}
 
-	// Reads data from body and decodes the desired fields inside API response object.
+	// Reads data from body and decodes fields inside object.
 	defer response.Body.Close()
 	var apiPokemon models.PokeApiPokemonResponse
 	decoder := json.NewDecoder(response.Body)
@@ -30,6 +30,7 @@ func GetPokemon(c *gin.Context) {
 		log.Fatal(err)
 	}
 
+	// Parses received object from API and compose desired response object.
 	parsedPokemon, err := util.ParsePokemon(apiPokemon)
 	if err != nil {
 		respondwithJSON(c, http.StatusInternalServerError, fmt.Sprintf("error found: %s", err.Error()))

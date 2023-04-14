@@ -14,14 +14,14 @@ produces:
 paths:
   /pokemon/{id}:
     get:
-      summary: Retrieve a Pokemon by ID
-      description: Returns a Pokemon by ID
+      summary: Retrieve a Pokemon by ID or name
+      description: Returns a Pokemon by ID or name
       produces:
         - application/json
       parameters:
         - name: id
           in: path
-          description: ID of the Pokemon to retrieve
+          description: ID or name of the Pokemon to retrieve
           required: true
           type: string
           default: ditto
@@ -29,7 +29,7 @@ paths:
         "200":
           description: Successful response
           schema:
-            $ref: "#/definitions/PokemonResponse"
+            $ref: "#/definitions/Pokemon"
         "400":
           description: Bad request
         "404":
@@ -37,42 +37,20 @@ paths:
         "500":
           description: Internal server error
 definitions:
-  PokemonResponse:
+  Pokemon:
     type: object
     properties:
       id:
         type: integer
-        example: 1
+        example: 132
       name:
         type: string
-        example: "bulbasaur"
-      types:
-        type: array
-        items:
-          $ref: "#/definitions/PokemonType"
-      stats:
-        type: array
-        items:
-          $ref: "#/definitions/PokemonStat"
-  PokemonType:
-    type: object
-    properties:
-      slot:
-        type: integer
-        example: 1
+        example: "ditto"
       type:
-        $ref: "#/definitions/BaseName"
-  PokemonStat:
-    type: object
-    properties:
-      base_stat:
-        type: integer
-        example: 45
-      stat:
-        $ref: "#/definitions/BaseName"
-  BaseName:
-    type: object
-    properties:
-      name:
         type: string
-        example: "grass"
+        example: "normal"
+      abilities:
+        type: object
+        example: { "attack": 48, "defense": 48, "hp": 48, "speed": 48 }
+        additionalProperties:
+          type: integer
