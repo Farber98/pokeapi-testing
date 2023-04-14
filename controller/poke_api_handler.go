@@ -5,55 +5,35 @@ import (
 	"catching-pokemons/util"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-// respondwithJSON write json response format
-func respondwithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, err := json.Marshal(payload)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	_, err = w.Write(response)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func GetPokemon(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
+// GetPokemon gets pokemon from provided name id.
+func GetPokemon(c *gin.Context) {
+	// Gets the Pokemon from PokeAPI
+	id := c.Param("id")
 	request := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", id)
-
 	response, err := http.Get(request)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	// Reads data from body and decodes the desired fields inside API response object.
+	defer response.Body.Close()
 	var apiPokemon models.PokeApiPokemonResponse
-
-	err = json.Unmarshal(body, &apiPokemon)
+	decoder := json.NewDecoder(response.Body)
+	err = decoder.Decode(&apiPokemon)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	parsedPokemon, err := util.ParsePokemon(apiPokemon)
 	if err != nil {
-		respondwithJSON(w, http.StatusInternalServerError, fmt.Sprintf("error found: %s", err.Error()))
+		respondwithJSON(c, http.StatusInternalServerError, fmt.Sprintf("error found: %s", err.Error()))
 	}
 
-	respondwithJSON(w, http.StatusOK, parsedPokemon)
+	respondwithJSON(c, http.StatusOK, parsedPokemon)
 }

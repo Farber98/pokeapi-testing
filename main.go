@@ -3,17 +3,19 @@ package main
 import (
 	"catching-pokemons/controller"
 	"fmt"
-	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	router := mux.NewRouter()
+	router := gin.Default()
 
-	router.HandleFunc("/pokemon/{id}", controller.GetPokemon).Methods("GET")
+	router.Use(cors.Default())
 
-	err := http.ListenAndServe(":8080", router)
+	router.GET("/pokemon/:id", controller.GetPokemon)
+
+	err := router.Run(":8080")
 	if err != nil {
 		fmt.Print("Error found")
 	}
