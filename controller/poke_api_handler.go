@@ -23,7 +23,7 @@ func GetPokemon(c *gin.Context) {
 
 	// Reads data from body and decodes fields inside object.
 	defer response.Body.Close()
-	var apiPokemon models.PokeApiPokemonResponse
+	var apiPokemon *models.PokeApiPokemonResponse
 	decoder := json.NewDecoder(response.Body)
 	err = decoder.Decode(&apiPokemon)
 	if err != nil {

@@ -1,0 +1,11 @@
+{
+  "id": 132,
+  "name": "ditto",
+  "type": "normal",
+  "abilities": {
+    "attack": 48,
+    "defense": 48,
+    "hp": 48,
+    "speed": 48
+  }
+}
