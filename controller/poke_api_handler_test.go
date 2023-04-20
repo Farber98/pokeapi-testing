@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/require"
 )
@@ -50,7 +52,7 @@ func TestGetDecodedPokeApiResponseSuccessMocked(t *testing.T) {
 	c.NoError(err)
 
 	// Get decoded pokemon from file.
-	expectedPokemon := decodePokemonFromFileContent(c, fileContent)
+	expectedPokemon := decodePokeapiResponseFromBytes(c, fileContent)
 
 	// Assert that mocked pokemon is equal to sample pokemon.
 	c.Equal(pokemon, expectedPokemon)
@@ -97,6 +99,58 @@ func TestGetDecodedPokeApiResponseInternalServerErrorDecodingJsonMocked(t *testi
 	// Get inexsistent pokemon from pokeapi
 	_, err := getDecodedPokeapiResponse("ditto", API_TIMEOUT)
 	c.EqualError(err, ErrInternal.Error())
+}
+
+func TestGetPokemonSuccessMocked(t *testing.T) {
+	c := require.New(t)
+
+	// Create a new Gin router.
+	router := gin.Default()
+
+	// Attach the GetPokemon handler to the Gin router.
+	router.GET("/pokemon/:id", GetPokemon)
+
+	// Create a new test request to pass to the GetPokemon handler.
+	req, err := http.NewRequest("GET", "/pokemon/ditto", nil)
+	c.NoError(err)
+
+	// Create a new recorder to record the response from the GetPokemon handler.
+	res := httptest.NewRecorder()
+
+	// Serve the request with the Gin router.
+	router.ServeHTTP(res, req)
+
+	// Get api response from samples
+	expectedResponse, err := ioutil.ReadFile("../util/samples/api_response.json")
+	c.NoError(err)
+
+	expectedPokemon := decodeApiResponseFromBytes(c, expectedResponse)
+	actualPokemon := decodeApiResponseFromBytes(c, res.Body.Bytes())
+	c.Equal(expectedPokemon, actualPokemon)
+	c.Equal(http.StatusOK, res.Code)
+}
+
+func TestGetPokemonErrInternalNotFoundMocked(t *testing.T) {
+	c := require.New(t)
+
+	// Create a new Gin router.
+	router := gin.Default()
+
+	// Attach the GetPokemon handler to the Gin router.
+	router.GET("/pokemon/:id", GetPokemon)
+
+	// Create a new test request to pass to the GetPokemon handler.
+	req, err := http.NewRequest("GET", "/pokemon/cualquierita", nil)
+	c.NoError(err)
+
+	// Create a new recorder to record the response from the GetPokemon handler.
+	res := httptest.NewRecorder()
+
+	// Serve the request with the Gin router.
+	router.ServeHTTP(res, req)
+
+	// Get api response from samples
+	c.Equal(http.StatusInternalServerError, res.Code)
 }
 
 /* func TestGetDecodedPokeApiResponseInternalServerErrorHttpClient(t *testing.T) {
@@ -146,7 +200,7 @@ func getSamplePokeapiResponse(c *require.Assertions) *models.PokeApiPokemonRespo
 	return apiPokemon
 }
 
-func decodePokemonFromFileContent(c *require.Assertions, fileContent []byte) *models.PokeApiPokemonResponse {
+func decodePokeapiResponseFromBytes(c *require.Assertions, fileContent []byte) *models.PokeApiPokemonResponse {
 	// Write fileContent to byte buffer successfully
 	var buf bytes.Buffer
 	_, err := buf.Write(fileContent)
@@ -154,6 +208,21 @@ func decodePokemonFromFileContent(c *require.Assertions, fileContent []byte) *mo
 
 	// Decode file content from buffer to PokeApiPokemonResponse model
 	var apiPokemon *models.PokeApiPokemonResponse
+	decoder := json.NewDecoder(&buf)
+	err = decoder.Decode(&apiPokemon)
+	c.NoError(err)
+
+	return apiPokemon
+}
+
+func decodeApiResponseFromBytes(c *require.Assertions, fileContent []byte) *models.Pokemon {
+	// Write fileContent to byte buffer successfully
+	var buf bytes.Buffer
+	_, err := buf.Write(fileContent)
+	c.NoError(err)
+
+	// Decode file content from buffer to PokeApiPokemonResponse model
+	var apiPokemon *models.Pokemon
 	decoder := json.NewDecoder(&buf)
 	err = decoder.Decode(&apiPokemon)
 	c.NoError(err)

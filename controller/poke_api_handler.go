@@ -30,10 +30,6 @@ func GetPokemon(c *gin.Context) {
 
 	// Check Id is passed.
 	id := c.Param("id")
-	if id == "" {
-		respondwithJSON(c, http.StatusBadRequest, ErrEmptyId.Error())
-		return
-	}
 
 	// Gets the Pokemon from PokeAPI
 	apiPokemon, err := getDecodedPokeapiResponse(id, API_TIMEOUT)
