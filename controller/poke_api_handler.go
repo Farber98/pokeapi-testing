@@ -7,9 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+const API_TIMEOUT = 5
 
 var (
 	// ErrEmptyId occurs when id param is empty on request
@@ -33,7 +36,7 @@ func GetPokemon(c *gin.Context) {
 	}
 
 	// Gets the Pokemon from PokeAPI
-	apiPokemon, err := getDecodedPokeapiResponse(id)
+	apiPokemon, err := getDecodedPokeapiResponse(id, API_TIMEOUT)
 	if err != nil {
 		respondwithJSON(c, http.StatusInternalServerError, err.Error())
 		return
@@ -48,10 +51,15 @@ func GetPokemon(c *gin.Context) {
 	respondwithJSON(c, http.StatusOK, parsedPokemon)
 }
 
-func getDecodedPokeapiResponse(id string) (*models.PokeApiPokemonResponse, error) {
+func getDecodedPokeapiResponse(id string, timeout int) (*models.PokeApiPokemonResponse, error) {
 	// Gets the Pokemon from PokeAPI
 	request := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", id)
-	response, err := http.Get(request)
+
+	client := &http.Client{
+		Timeout: time.Second * time.Duration(timeout),
+	}
+
+	response, err := client.Get(request)
 	if err != nil {
 		return &models.PokeApiPokemonResponse{}, ErrInternal
 	}
@@ -72,7 +80,7 @@ func getDecodedPokeapiResponse(id string) (*models.PokeApiPokemonResponse, error
 	decoder := json.NewDecoder(response.Body)
 	err = decoder.Decode(&apiPokemon)
 	if err != nil {
-		return &models.PokeApiPokemonResponse{}, ErrPokemonNotFound
+		return &models.PokeApiPokemonResponse{}, ErrInternal
 	}
 
 	return apiPokemon, nil
