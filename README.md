@@ -1,2 +1,2 @@
-# go-testing-course
-Project to learn unit testing in Golang
+# go-testing
+Project to practice unit testing in Golang
